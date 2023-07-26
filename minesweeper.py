@@ -13,9 +13,12 @@ def create_board(rows, cols, num_mines):
 
     return board
 
-def print_board(board):
-    for row in board:
-        print(" ".join(str(cell) for cell in row))
+def print_board(board, reveal_all=False):
+    rows, cols = len(board), len(board[0])
+    print("\n   " + " ".join(str(i) for i in range(cols)))
+
+    for i in range(rows):
+        print(f"{i}  {' '.join(str(cell) if cell != '*' or reveal_all else 'X' for cell in board[i])}")
 
 def count_adjacent_mines(board, row, col):
     count = 0
@@ -61,12 +64,28 @@ def reveal_cell(board, row, col):
         reveal_cell(board, row + 1, col)
         reveal_cell(board, row + 1, col + 1)
 
+def flag_cell(board, row, col):
+    if board[row][col] == 'F':
+        board[row][col] = 'X'
+    elif type(board[row][col]) is int:
+        print("Cell already revealed. Cannot flag.")
+    else:
+        board[row][col] = 'F'
+
+def check_win(board):
+    for row in board:
+        for cell in row:
+            if cell != '*' and type(cell) is not int:
+                return False
+    return True
+
 def play_game(rows, cols, num_mines):
     board = create_board(rows, cols, num_mines)
     print_board(board)
 
     while True:
         try:
+            action = input("Enter 'R' to reveal, 'F' to flag/unflag a cell: ").upper()
             row = int(input("Enter the row (0 to {}): ".format(rows - 1)))
             col = int(input("Enter the column (0 to {}): ".format(cols - 1)))
         except ValueError:
@@ -77,12 +96,21 @@ def play_game(rows, cols, num_mines):
             print("Invalid input. Row and column numbers must be within the board range.")
             continue
 
-        if board[row][col] == '*':
-            print("Game Over! You hit a mine.")
-            return
+        if action == 'R':
+            if board[row][col] == '*':
+                print("Game Over! You hit a mine.")
+                return
+            reveal_cell(board, row, col)
+        elif action == 'F':
+            flag_cell(board, row, col)
+        else:
+            print("Invalid action. Please enter 'R' or 'F'.")
 
-        reveal_cell(board, row, col)
         print_board(board)
+
+        if check_win(board):
+            print("Congratulations! You've won!")
+            return
 
 if __name__ == "__main__":
     rows, cols = 8, 8
