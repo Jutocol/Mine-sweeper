@@ -1,0 +1,32 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 {
+    margin-top: 20px;
+}
+
+#board {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(8, 40px); /* Adjust the number of columns as needed */
+    gap: 2px;
+    justify-content: center;
+}
+
+.cell {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: #eee;
+}
+
+.cell.revealed {
+    background-color: #fff;
+}

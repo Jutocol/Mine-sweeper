@@ -1,4 +1,9 @@
 import random
+import os
+
+def clear_screen():
+    # Clear the terminal/console screen
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def create_board(rows, cols, num_mines):
     # Create an empty board filled with zeros
@@ -18,7 +23,18 @@ def print_board(board, reveal_all=False):
     print("\n   " + " ".join(str(i) for i in range(cols)))
 
     for i in range(rows):
-        print(f"{i}  {' '.join(str(cell) if cell != '*' or reveal_all else 'X' for cell in board[i])}")
+        print(f"{i}  ", end='')
+        for j in range(cols):
+            cell = board[i][j]
+            if cell == 'F':
+                print("\033[91mF\033[0m", end=' ')  # Red color for flagged cells
+            elif type(cell) is int:
+                print("\033[94m{}\033[0m".format(cell), end=' ')  # Blue color for revealed cells
+            elif reveal_all and cell == '*':
+                print("\033[31m*\033[0m", end=' ')  # Red color for revealed mines
+            else:
+                print("X", end=' ')  # Covered cells
+        print()
 
 def count_adjacent_mines(board, row, col):
     count = 0
@@ -45,8 +61,8 @@ def reveal_cell(board, row, col):
     if board[row][col] == '*':
         return
 
-    # If the cell is already revealed, we don't need to do anything
-    if type(board[row][col]) is int:
+    # If the cell is already revealed or flagged, we don't need to do anything
+    if type(board[row][col]) is int or board[row][col] == 'F':
         return
 
     # Count the number of adjacent mines
@@ -80,33 +96,54 @@ def check_win(board):
     return True
 
 def play_game(rows, cols, num_mines):
-    board = create_board(rows, cols, num_mines)
-    print_board(board)
-
     while True:
-        try:
-            action = input("Enter 'R' to reveal, 'F' to flag/unflag a cell: ").upper()
-            row = int(input("Enter the row (0 to {}): ".format(rows - 1)))
-            col = int(input("Enter the column (0 to {}): ".format(cols - 1)))
-        except ValueError:
-            print("Invalid input. Please enter valid row and column numbers.")
-            continue
-
-        if not (0 <= row < rows and 0 <= col < cols):
-            print("Invalid input. Row and column numbers must be within the board range.")
-            continue
-
-        if action == 'R':
-            if board[row][col] == '*':
-                print("Game Over! You hit a mine.")
-                return
-            reveal_cell(board, row, col)
-        elif action == 'F':
-            flag_cell(board, row, col)
-        else:
-            print("Invalid action. Please enter 'R' or 'F'.")
-
+        board = create_board(rows, cols, num_mines)
+        num_flags = 0
+        num_revealed = 0
         print_board(board)
+
+        while True:
+            try:
+                action = input("Enter 'R' to reveal, 'F' to flag/unflag a cell, or 'Q' to quit: ").upper()
+                if action == 'Q':
+                    return
+                row = int(input("Enter the row (0 to {}): ".format(rows - 1)))
+                col = int(input("Enter the column (0 to {}): ".format(cols - 1)))
+            except ValueError:
+                print("Invalid input. Please enter valid row and column numbers.")
+                continue
+
+            if not (0 <= row < rows and 0 <= col < cols):
+                print("Invalid input. Row and column numbers must be within the board range.")
+                continue
+
+            if action == 'R':
+                if board[row][col] == '*':
+                    print("Game Over! You hit a mine.")
+                    print_board(board, reveal_all=True)
+                    break
+
+                if type(board[row][col]) is not int:
+                    num_revealed += 1
+
+                reveal_cell(board, row, col)
+            elif action == 'F':
+                flag_cell(board, row, col)
+                if board[row][col] == 'F':
+                    num_flags += 1
+                elif board[row][col] == 'X':
+                    num_flags -= 1
+            else:
+                print("Invalid action. Please enter 'R', 'F', or 'Q'.")
+
+            if num_revealed == rows * cols - num_mines:
+                print("Congratulations! You've won!")
+                print_board(board, reveal_all=True)
+                break
+
+            clear_screen()
+            print("Remaining mines: {}".format(num_mines - num_flags))
+            print_board(board)
 
         if check_win(board):
             print("Congratulations! You've won!")
